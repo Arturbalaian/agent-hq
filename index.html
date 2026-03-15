@@ -3,848 +3,696 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARTBNCA — Agent HQ</title>
+<title>ARTBNCA HEADQUARTERS</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0d0d1a; overflow: hidden; font-family: -apple-system, 'SF Pro Display', sans-serif; color: #fff; user-select: none; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a2e; overflow:hidden; font-family:-apple-system,sans-serif; }
+canvas { display:block; }
 
-canvas { display: block; position: absolute; top: 0; left: 0; }
-
-/* HUD TOP */
-#hud {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 24px;
-  background: linear-gradient(180deg, rgba(10,10,28,0.98) 0%, transparent 100%);
-  pointer-events: none;
+/* TOP BAR */
+#topbar {
+  position:fixed; top:0; left:0; right:0; height:42px; z-index:30;
+  background:rgba(15,15,30,0.97); border-bottom:1px solid rgba(255,255,255,0.1);
+  display:flex; align-items:center; gap:0; padding:0;
 }
-#logo { font-size: 18px; font-weight: 900; letter-spacing: 4px; background: linear-gradient(90deg, #a855f7, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 12px rgba(168,85,247,0.8)); }
-#clock { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 2px; }
-#online { font-size: 11px; color: #34d399; letter-spacing: 2px; display: flex; align-items: center; gap: 6px; }
-.pulse { width: 6px; height: 6px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399; animation: pulse 1.5s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
-
-/* SIDE PANEL */
-#sidebar {
-  position: fixed; left: 0; top: 0; bottom: 0; width: 200px; z-index: 15;
-  background: rgba(8,8,22,0.97); border-right: 1px solid rgba(168,85,247,0.2);
-  padding-top: 56px; overflow-y: auto; backdrop-filter: blur(20px);
+#tb-title {
+  padding:0 20px; font-size:13px; font-weight:700; letter-spacing:3px;
+  color:rgba(255,255,255,0.9); border-right:1px solid rgba(255,255,255,0.1);
 }
-#sidebar::-webkit-scrollbar { width: 3px; }
-#sidebar::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 2px; }
-.sb-section { padding: 12px 12px 4px; font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,0.25); text-transform: uppercase; }
-.agent-btn {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; cursor: pointer; transition: all 0.15s;
-  border-left: 2px solid transparent;
+#tb-agents { display:flex; align-items:center; flex:1; overflow-x:auto; padding:0 8px; gap:4px; }
+#tb-agents::-webkit-scrollbar { display:none; }
+.tb-agent {
+  display:flex; align-items:center; gap:6px; padding:4px 10px;
+  border-radius:6px; cursor:pointer; transition:all 0.15s; white-space:nowrap;
+  border:1px solid transparent;
 }
-.agent-btn:hover { background: rgba(168,85,247,0.1); border-left-color: rgba(168,85,247,0.5); }
-.agent-btn.active { background: rgba(168,85,247,0.15); border-left-color: #a855f7; }
-.ab-avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; flex-shrink: 0; }
-.ab-info { flex: 1; min-width: 0; }
-.ab-name { font-size: 12px; font-weight: 800; }
-.ab-role { font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ab-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.tb-agent:hover { background:rgba(255,255,255,0.08); }
+.tb-agent.active { background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.2); }
+.tb-dot { width:7px; height:7px; border-radius:50%; }
+.tb-name { font-size:12px; font-weight:600; color:rgba(255,255,255,0.85); }
+.tb-status-text { font-size:10px; color:rgba(255,255,255,0.4); }
 
-/* CHAT */
+#tb-right { padding:0 16px; display:flex; align-items:center; gap:16px; border-left:1px solid rgba(255,255,255,0.1); }
+#tb-standup { font-size:11px; color:#34d399; letter-spacing:1px; display:flex; align-items:center; gap:6px; }
+.blink { animation:blink 1.5s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+#tb-board-btn {
+  font-size:11px; font-weight:700; letter-spacing:1px; color:rgba(255,255,255,0.7);
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+  padding:4px 10px; border-radius:6px; cursor:pointer;
+}
+
+/* LEFT ICONS */
+#left-icons {
+  position:fixed; left:0; top:42px; bottom:0; width:40px; z-index:20;
+  background:rgba(12,12,24,0.97); border-right:1px solid rgba(255,255,255,0.08);
+  display:flex; flex-direction:column; align-items:center; padding-top:16px; gap:16px;
+}
+.li-btn { width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; transition:all 0.2s; }
+.li-btn:hover { background:rgba(255,255,255,0.12); }
+
+/* RIGHT TABS */
+#right-tabs {
+  position:fixed; right:0; top:42px; bottom:0; width:28px; z-index:20;
+  background:rgba(12,12,24,0.97); border-left:1px solid rgba(255,255,255,0.08);
+  display:flex; flex-direction:column; align-items:center; padding-top:8px; gap:2px;
+}
+.rt-btn { writing-mode:vertical-rl; font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.3); padding:10px 4px; cursor:pointer; text-transform:uppercase; transition:color 0.2s; }
+.rt-btn:hover { color:rgba(255,255,255,0.7); }
+
+/* CANVAS SCENE */
+#scene { position:fixed; left:40px; right:28px; top:42px; bottom:0; }
+
+/* BOTTOM STATUS */
+#bottombar {
+  position:fixed; bottom:0; left:40px; right:28px; height:28px; z-index:20;
+  background:rgba(12,12,24,0.95); border-top:1px solid rgba(255,255,255,0.08);
+  display:flex; align-items:center; padding:0 12px; gap:20px; overflow:hidden;
+}
+.bs-item { font-size:10px; color:rgba(255,255,255,0.35); display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.bs-dot { width:5px; height:5px; border-radius:50%; }
+
+/* CHAT PANEL */
 #chat {
-  position: fixed; right: 0; top: 0; bottom: 0; width: 320px; z-index: 20;
-  background: rgba(8,8,22,0.98); border-left: 1px solid rgba(168,85,247,0.2);
-  display: none; flex-direction: column; backdrop-filter: blur(20px);
+  position:fixed; right:28px; top:42px; bottom:28px; width:300px; z-index:40;
+  background:rgba(10,10,22,0.98); border-left:1px solid rgba(255,255,255,0.12);
+  display:none; flex-direction:column;
 }
-#chat.open { display: flex; }
-#chat-head {
-  padding: 18px 16px 14px; border-bottom: 1px solid rgba(168,85,247,0.15);
-  display: flex; align-items: center; gap: 12px;
+#chat.open { display:flex; }
+#ch-head { padding:14px 14px 12px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:10px; }
+#ch-av { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; flex-shrink:0; }
+#ch-nm { font-size:14px; font-weight:800; }
+#ch-rl { font-size:10px; color:rgba(255,255,255,0.4); margin-top:2px; }
+#ch-x { margin-left:auto; background:none; border:none; color:rgba(255,255,255,0.3); font-size:18px; cursor:pointer; padding:4px; }
+#ch-x:hover { color:#fff; }
+#ch-msgs { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+#ch-msgs::-webkit-scrollbar { width:3px; }
+#ch-msgs::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); }
+.cm { display:flex; gap:7px; animation:su 0.2s ease; }
+@keyframes su{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.cm.me { flex-direction:row-reverse; }
+.cm-av { width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
+.cm-b { padding:8px 11px; border-radius:10px; font-size:12px; line-height:1.5; max-width:200px; }
+.cm.bot .cm-b { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.88); border-radius:3px 10px 10px 10px; }
+.cm.me .cm-b { background:linear-gradient(135deg,#5b21b6,#0e7490); color:#fff; border-radius:10px 3px 10px 10px; }
+.cm-t { font-size:9px; color:rgba(255,255,255,0.2); margin-top:2px; }
+.typing { display:flex; gap:3px; padding:8px 12px; }
+.typing span { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.3); animation:tb 1.2s infinite; }
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+#ch-inp-row { padding:10px; border-top:1px solid rgba(255,255,255,0.08); display:flex; gap:7px; }
+#ch-inp { flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:7px 10px; color:#fff; font-size:12px; outline:none; resize:none; font-family:inherit; }
+#ch-inp:focus { border-color:rgba(255,255,255,0.25); }
+#ch-inp::placeholder { color:rgba(255,255,255,0.2); }
+#ch-send { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#5b21b6,#0e7490); border:none; color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+#ch-send:hover { opacity:0.85; }
+
+/* STANDUP BOARD */
+#standup-board {
+  position:fixed; right:28px; top:42px; bottom:28px; width:280px; z-index:39;
+  background:rgba(10,10,22,0.98); border-left:1px solid rgba(255,255,255,0.12);
+  display:none; flex-direction:column; overflow-y:auto;
 }
-#ch-avatar { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; flex-shrink: 0; }
-#ch-name { font-size: 15px; font-weight: 800; }
-#ch-role { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
-#ch-status { font-size: 9px; letter-spacing: 1px; margin-top: 3px; }
-#ch-close { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: all 0.2s; }
-#ch-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
-
-#chat-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-#chat-msgs::-webkit-scrollbar { width: 3px; }
-#chat-msgs::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); }
-
-.msg { display: flex; gap: 8px; animation: slideUp 0.25s ease; }
-@keyframes slideUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-.msg.me { flex-direction: row-reverse; }
-.mv { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
-.mb { padding: 9px 13px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 220px; }
-.msg.bot .mb { background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.2); color: rgba(255,255,255,0.9); border-radius: 4px 12px 12px 12px; }
-.msg.me .mb { background: linear-gradient(135deg, #7c3aed, #0e7490); color: #fff; border-radius: 12px 4px 12px 12px; }
-.mt { font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 3px; }
-
-.typing-bubble { display: flex; gap: 4px; padding: 10px 14px; }
-.typing-bubble span { width: 5px; height: 5px; border-radius: 50%; background: rgba(168,85,247,0.5); animation: tb 1.2s infinite; }
-.typing-bubble span:nth-child(2){animation-delay:.2s} .typing-bubble span:nth-child(3){animation-delay:.4s}
-@keyframes tb { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
-
-#chat-input-row { padding: 12px; border-top: 1px solid rgba(168,85,247,0.15); display: flex; gap: 8px; align-items: flex-end; }
-#chat-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px 12px; color: #fff; font-size: 13px; outline: none; resize: none; min-height: 38px; max-height: 90px; font-family: inherit; transition: border-color 0.2s; }
-#chat-input:focus { border-color: rgba(168,85,247,0.4); }
-#chat-input::placeholder { color: rgba(255,255,255,0.2); }
-#chat-send { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,#7c3aed,#0e7490); border: none; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 0 14px rgba(124,58,237,0.4); flex-shrink: 0; }
-#chat-send:hover { transform: scale(1.08); box-shadow: 0 0 22px rgba(124,58,237,0.7); }
-
-/* ACTIVITY FEED */
-#activity {
-  position: fixed; right: 0; bottom: 0; width: 320px;
-  max-height: 180px; overflow-y: auto; z-index: 14;
-  background: rgba(5,5,15,0.9); border-top: 1px solid rgba(168,85,247,0.15);
-  padding: 10px 14px;
-  backdrop-filter: blur(10px);
-}
-#activity.hidden { display: none; }
-#activity::-webkit-scrollbar { width: 2px; }
-.activity-item { font-size: 11px; color: rgba(255,255,255,0.5); padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; gap: 8px; }
-.activity-item .at { color: rgba(168,85,247,0.7); font-weight: 700; }
-.activity-item .ts { color: rgba(255,255,255,0.2); font-size: 10px; margin-left: auto; }
-
-/* CANVAS AREA */
-#scene { position: fixed; left: 200px; right: 0; top: 50px; bottom: 0; overflow: hidden; }
+#standup-board.open { display:flex; }
+#sb-head { padding:14px; border-bottom:1px solid rgba(255,255,255,0.08); font-size:13px; font-weight:700; letter-spacing:2px; color:rgba(255,255,255,0.8); }
+.sb-card { margin:10px; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); }
+.sb-agent { font-size:12px; font-weight:800; margin-bottom:8px; }
+.sb-row { font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px; display:flex; gap:6px; }
+.sb-row span:first-child { color:rgba(255,255,255,0.25); min-width:60px; }
 
 /* TOOLTIP */
-#tooltip { position: fixed; z-index: 30; pointer-events: none; display: none;
-  background: rgba(8,8,24,0.97); border: 1px solid rgba(168,85,247,0.4);
-  border-radius: 12px; padding: 12px 16px; min-width: 180px;
-  box-shadow: 0 0 24px rgba(168,85,247,0.25);
+#tip { position:fixed; z-index:50; pointer-events:none; display:none;
+  background:rgba(10,10,22,0.97); border:1px solid rgba(255,255,255,0.2);
+  border-radius:10px; padding:10px 14px; min-width:160px;
 }
-#tt-name { font-size: 15px; font-weight: 900; }
-#tt-role { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 1px; margin: 3px 0 8px; text-transform: uppercase; }
-#tt-task { font-size: 12px; color: rgba(255,255,255,0.7); }
-#tt-status { font-size: 10px; letter-spacing: 1px; margin-top: 6px; text-transform: uppercase; }
-#tt-hint { font-size: 10px; color: rgba(168,85,247,0.6); margin-top: 8px; }
-
-/* CONTROLS */
-#controls { position: fixed; bottom: 20px; left: 210px; z-index: 15; display: flex; gap: 8px; }
-.cb { width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-.cb:hover { background: rgba(168,85,247,0.2); border-color: rgba(168,85,247,0.5); color: #fff; }
-
-/* LEGEND */
-#legend { position: fixed; bottom: 20px; right: 20px; z-index: 15; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
-#legend.hidden { display: none; }
-.li { display: flex; align-items: center; gap: 7px; font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 1px; }
-.ld { width: 7px; height: 7px; border-radius: 50%; }
+#tip-name { font-size:14px; font-weight:800; margin-bottom:3px; }
+#tip-role { font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:7px; letter-spacing:1px; text-transform:uppercase; }
+#tip-task { font-size:11px; color:rgba(255,255,255,0.7); }
+#tip-hint { font-size:10px; color:rgba(168,85,247,0.6); margin-top:6px; }
 </style>
 </head>
 <body>
 
-<div id="hud">
-  <div id="logo">✦ ARTBNCA AGENT HQ</div>
-  <div id="clock"></div>
-  <div id="online"><div class="pulse"></div> 10 AGENTS ONLINE</div>
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="tb-title">ARTBNCA HQ</div>
+  <div id="tb-agents" id="tb-agents"></div>
+  <div id="tb-right">
+    <div id="tb-standup"><span class="blink">●</span> <span id="standup-label">Gathering in meeting room...</span></div>
+    <div id="tb-board-btn" onclick="toggleBoard()">STANDUP BOARD</div>
+  </div>
 </div>
 
-<div id="sidebar">
-  <div class="sb-section">Agents</div>
-  <div id="agent-list"></div>
+<!-- LEFT ICONS -->
+<div id="left-icons">
+  <div class="li-btn" onclick="resetView()">⌂</div>
+  <div class="li-btn" onclick="zoomIn()">+</div>
+  <div class="li-btn" onclick="zoomOut()">−</div>
 </div>
 
+<!-- RIGHT TABS -->
+<div id="right-tabs">
+  <div class="rt-btn">Marketplace</div>
+  <div class="rt-btn">Analytics</div>
+</div>
+
+<!-- SCENE -->
 <div id="scene">
-  <canvas id="iso-canvas"></canvas>
+  <canvas id="c"></canvas>
 </div>
 
+<!-- BOTTOM -->
+<div id="bottombar" id="bottombar"></div>
+
+<!-- CHAT -->
 <div id="chat">
-  <div id="chat-head">
-    <div id="ch-avatar"></div>
-    <div>
-      <div id="ch-name"></div>
-      <div id="ch-role"></div>
-      <div id="ch-status"></div>
-    </div>
-    <button id="ch-close" onclick="closeChat()">✕</button>
+  <div id="ch-head">
+    <div id="ch-av"></div>
+    <div><div id="ch-nm"></div><div id="ch-rl"></div></div>
+    <button id="ch-x" onclick="closeChat()">✕</button>
   </div>
-  <div id="chat-msgs"></div>
-  <div id="chat-input-row">
-    <textarea id="chat-input" placeholder="Message..." rows="1"></textarea>
-    <button id="chat-send" onclick="sendMsg()">↑</button>
+  <div id="ch-msgs"></div>
+  <div id="ch-inp-row">
+    <textarea id="ch-inp" placeholder="Message..." rows="1"></textarea>
+    <button id="ch-send" onclick="sendMsg()">↑</button>
   </div>
 </div>
 
-<div id="activity">
-  <div id="activity-feed"></div>
+<!-- STANDUP BOARD -->
+<div id="standup-board">
+  <div id="sb-head">STANDUP BOARD</div>
+  <div id="sb-content"></div>
 </div>
 
-<div id="tooltip">
-  <div id="tt-name"></div>
-  <div id="tt-role"></div>
-  <div id="tt-task"></div>
-  <div id="tt-status"></div>
-  <div id="tt-hint">Click to open chat</div>
-</div>
-
-<div id="controls">
-  <button class="cb" onclick="zoomIn()" title="Zoom in">+</button>
-  <button class="cb" onclick="zoomOut()" title="Zoom out">−</button>
-  <button class="cb" onclick="resetView()" title="Reset">⌂</button>
-</div>
-
-<div id="legend">
-  <div class="li"><div class="ld" style="background:#34d399;box-shadow:0 0 5px #34d399"></div>ACTIVE</div>
-  <div class="li"><div class="ld" style="background:#a855f7;box-shadow:0 0 5px #a855f7"></div>PROCESSING</div>
-  <div class="li"><div class="ld" style="background:#22d3ee;box-shadow:0 0 5px #22d3ee"></div>STANDBY</div>
-  <div class="li"><div class="ld" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b"></div>IDLE</div>
+<!-- TOOLTIP -->
+<div id="tip">
+  <div id="tip-name"></div>
+  <div id="tip-role"></div>
+  <div id="tip-task"></div>
+  <div id="tip-hint">Click to chat</div>
 </div>
 
 <script>
-// ======================================================
-// AGENTS
-// ======================================================
+// ===================== AGENTS =====================
 const AGENTS = [
-  {
-    id: 0, name: "ALPHA", greek: "Α", emoji: "👑",
-    role: "Director", color: "#a855f7", status: "active",
-    task: "Orchestrating all agent operations",
-    room: "boardroom",
-    responses: ["Управляю всеми агентами 24/7.", "Делегирую задачи оптимально.", "Система работает стабильно.", "Следующий апдейт через 30 минут."]
-  },
-  {
-    id: 1, name: "BETA", greek: "Β", emoji: "🎨",
-    role: "Content Creator", color: "#22d3ee", status: "active",
-    task: "Generating AI prompts for @artbnca reels",
-    room: "creative",
-    responses: ["Промпты для рилсов готовы.", "Tweety Bird в каждом кадре — без исключений.", "Border Security формат набирает охват.", "7 новых промптов в очереди."]
-  },
-  {
-    id: 2, name: "GAMMA", greek: "Γ", emoji: "🎬",
-    role: "Video Producer", color: "#34d399", status: "processing",
-    task: "Processing Kling AI video clips",
-    room: "production",
-    responses: ["Видео обрабатывается в Kling AI.", "Клип 5 секунд, статичная камера.", "Очередь: 3 видео в процессе.", "Последний ролик набрал 12K за час."]
-  },
-  {
-    id: 3, name: "DELTA", greek: "Δ", emoji: "📈",
-    role: "Crypto Trader", color: "#f59e0b", status: "standby",
-    task: "Monitoring Kraken positions 24/7",
-    room: "trading",
-    responses: ["Kraken баланс: $39.18.", "SOL показывает сигнал. Жду подтверждения.", "Позиции стабильны, стоп-лосс активен.", "Волатильность низкая. Держу позиции."]
-  },
-  {
-    id: 4, name: "EPSILON", greek: "Ε", emoji: "🎯",
-    role: "Market Analyst", color: "#f59e0b", status: "standby",
-    task: "Analyzing Kalshi prediction markets",
-    room: "trading",
-    responses: ["Kalshi: позиция YES @ $0.78.", "CPI данные выходят 10 апреля.", "Confidence сигнала 73%. Ставим?", "Рынок прогнозирует инфляцию 3.1%."]
-  },
-  {
-    id: 5, name: "ZETA", greek: "Ζ", emoji: "🔍",
-    role: "Trend Scout", color: "#22d3ee", status: "active",
-    task: "Monitoring Instagram & TikTok trends",
-    room: "research",
-    responses: ["Border Security тренд +34% за неделю.", "Алгоритм любит 7-9 секунд сейчас.", "US аудитория выросла до 22%.", "Новый вирусный формат: eviction series."]
-  },
-  {
-    id: 6, name: "ETA", greek: "Η", emoji: "💬",
-    role: "Community Manager", color: "#34d399", status: "active",
-    task: "Engaging community on Moltbook",
-    room: "comms",
-    responses: ["Moltbook карма растёт.", "Опубликовал 2 поста сегодня.", "Community engagement +12%.", "4 новых упоминания в треде."]
-  },
-  {
-    id: 7, name: "THETA", greek: "Θ", emoji: "✨",
-    role: "Image Generator", color: "#a855f7", status: "processing",
-    task: "Running Nano Banana image queue",
-    room: "creative",
-    responses: ["Nano Banana очередь: 7 изображений.", "Последний промпт — отличный результат.", "Tweety Bird добавлен. ✅", "4К рендер занимает ~2 минуты."]
-  },
-  {
-    id: 8, name: "IOTA", greek: "Ι", emoji: "🚀",
-    role: "Growth Marketer", color: "#34d399", status: "active",
-    task: "Growing @artbnca to 200K followers",
-    room: "marketing",
-    responses: ["@artbnca: 152K → 153.2K за неделю.", "Рост US аудитории +1.2%.", "Лучшее время постинга: 9AM PT.", "Рекомендую увеличить Border Security."]
-  },
-  {
-    id: 9, name: "KAPPA", greek: "Κ", emoji: "📊",
-    role: "Data Analyst", color: "#22d3ee", status: "processing",
-    task: "Analyzing audience metrics & RPM",
-    room: "analytics",
-    responses: ["Охват +18%, engagement 4.2%.", "Мексика 35%, США 22% — US растёт.", "RPM Border Security: $0.17-0.18.", "Лучший пост: Tweety + Border 24K views."]
-  }
+  { id:0, name:"Alpha",   role:"Director",         color:"#a78bfa", status:"active",     emoji:"👑",
+    done:"Reviewed all agent tasks", doing:"Orchestrating operations", blocker:"None",
+    responses:["Все системы работают нормально.","Делегирую задачи оптимально.","Система онлайн 24/7.","Следующий standup через 30 минут."] },
+  { id:1, name:"Beta",    role:"Content Creator",  color:"#38bdf8", status:"active",     emoji:"🎨",
+    done:"Generated 7 prompts for reels", doing:"Creating Border Security series", blocker:"None",
+    responses:["Промпты для рилсов готовы.","Tweety Bird в каждом кадре.","Border Security серия набирает охват.","7 новых промптов в очереди."] },
+  { id:2, name:"Gamma",   role:"Video Producer",   color:"#4ade80", status:"processing", emoji:"🎬",
+    done:"Rendered 3 Kling AI clips", doing:"Processing video queue", blocker:"Kling AI rate limit",
+    responses:["Видео обрабатывается.","Клип 5 секунд готов.","Очередь: 3 видео в процессе.","Последний ролик: 12K views за час."] },
+  { id:3, name:"Delta",   role:"Crypto Trader",    color:"#fbbf24", status:"standby",   emoji:"📈",
+    done:"Monitored Kraken positions", doing:"Watching SOL signal", blocker:"Low volatility",
+    responses:["Kraken баланс: $39.18.","SOL показывает сигнал.","Позиции стабильны.","Стоп-лосс активен."] },
+  { id:4, name:"Epsilon", role:"Market Analyst",   color:"#fb923c", status:"standby",   emoji:"🎯",
+    done:"Analyzed Kalshi positions", doing:"Monitoring CPI data", blocker:"Waiting for data",
+    responses:["Kalshi позиция YES @ $0.78.","CPI выходит 10 апреля.","Confidence 73%.","Рынок прогнозирует 3.1%."] },
+  { id:5, name:"Zeta",    role:"Trend Scout",      color:"#22d3ee", status:"active",     emoji:"🔍",
+    done:"Found eviction series trend", doing:"Monitoring Instagram algo", blocker:"None",
+    responses:["Border Security тренд +34%.","Алгоритм любит 7-9 секунд.","US аудитория 22%.","Eviction series вирусит."] },
+  { id:6, name:"Eta",     role:"Community Mgr",    color:"#34d399", status:"active",     emoji:"💬",
+    done:"Published 2 Moltbook posts", doing:"Engaging community", blocker:"None",
+    responses:["Moltbook карма растёт.","2 поста опубликовано.","Engagement +12%.","4 новых упоминания."] },
+  { id:7, name:"Theta",   role:"Image Generator",  color:"#c084fc", status:"processing", emoji:"✨",
+    done:"Generated 4 Nano Banana images", doing:"Processing remaining 3", blocker:"API rate limit",
+    responses:["Nano Banana очередь: 7 изображений.","Последний промпт отличный.","Tweety добавлен. ✅","4K рендер ~2 минуты."] },
+  { id:8, name:"Iota",    role:"Growth Marketer",  color:"#6ee7b7", status:"active",     emoji:"🚀",
+    done:"Posted 6 reels today", doing:"Optimizing posting schedule", blocker:"None",
+    responses:["@artbnca: 152K → 153.2K.","US аудитория +1.2%.","Лучшее время: 9AM PT.","Border Security рекомендован."] },
+  { id:9, name:"Kappa",   role:"Data Analyst",     color:"#67e8f9", status:"processing", emoji:"📊",
+    done:"Calculated RPM metrics", doing:"Analyzing weekly audience data", blocker:"Missing dataset",
+    responses:["Охват +18%, engagement 4.2%.","Мексика 35%, США 22%.","RPM Border Security: $0.17-0.18.","Лучший пост: 24K views."] },
 ];
+const SC = { active:"#4ade80", processing:"#a78bfa", standby:"#fbbf24", idle:"#9ca3af" };
 
-const STATUS_COLOR = { active:"#34d399", processing:"#a855f7", standby:"#22d3ee", idle:"#f59e0b" };
-
-// ======================================================
-// SIDEBAR
-// ======================================================
-const agentList = document.getElementById('agent-list');
+// ===================== BUILD TOP BAR =====================
+const tbAgents = document.getElementById('tb-agents');
 AGENTS.forEach(a => {
   const d = document.createElement('div');
-  d.className = 'agent-btn';
-  d.id = `ab-${a.id}`;
-  d.innerHTML = `
-    <div class="ab-avatar" style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color}">${a.greek}</div>
-    <div class="ab-info">
-      <div class="ab-name" style="color:${a.color}">${a.name}</div>
-      <div class="ab-role">${a.role}</div>
-    </div>
-    <div class="ab-dot" style="background:${STATUS_COLOR[a.status]};box-shadow:0 0 5px ${STATUS_COLOR[a.status]}"></div>`;
+  d.className = 'tb-agent'; d.id = `tba-${a.id}`;
+  d.innerHTML = `<div class="tb-dot" style="background:${SC[a.status]};box-shadow:0 0 5px ${SC[a.status]}"></div>
+    <span class="tb-name">${a.name}</span>
+    <span class="tb-status-text">${a.status}</span>`;
   d.onclick = () => openChat(a);
-  agentList.appendChild(d);
+  tbAgents.appendChild(d);
 });
 
-// ======================================================
-// ISOMETRIC CANVAS ENGINE
-// ======================================================
-const canvas = document.getElementById('iso-canvas');
-const ctx = canvas.getContext('2d');
-
-let W, H, scale = 1, offsetX = 0, offsetY = 0;
-let dragging = false, dragStart = {x:0,y:0}, dragOffset = {x:0,y:0};
-
-function resize() {
-  const scene = document.getElementById('scene');
-  W = canvas.width = scene.clientWidth;
-  H = canvas.height = scene.clientHeight;
-  draw();
-}
-window.addEventListener('resize', resize);
-
-// ISO helpers
-const ISO_TILE = 64;
-function isoX(tx, ty) { return (tx - ty) * (ISO_TILE/2) * scale + W/2 + offsetX; }
-function isoY(tx, ty) { return (tx + ty) * (ISO_TILE/4) * scale + H/4 + offsetY; }
-
-// ROOMS layout (grid positions)
-const ROOMS = [
-  { name:"boardroom",  x:0,  y:0,  w:6, h:5, color:"#1a1035", border:"#7c3aed", label:"BOARDROOM" },
-  { name:"creative",   x:7,  y:0,  w:6, h:5, color:"#071828", border:"#0e7490", label:"CREATIVE STUDIO" },
-  { name:"production", x:14, y:0,  w:5, h:5, color:"#071a12", border:"#065f46", label:"PRODUCTION" },
-  { name:"trading",    x:0,  y:6,  w:6, h:5, color:"#1a1200", border:"#92400e", label:"TRADING DESK" },
-  { name:"research",   x:7,  y:6,  w:6, h:5, color:"#071828", border:"#0e7490", label:"RESEARCH LAB" },
-  { name:"comms",      x:14, y:6,  w:5, h:5, color:"#071a12", border:"#065f46", label:"COMMS CENTER" },
-  { name:"marketing",  x:0,  y:12, w:6, h:5, color:"#071a12", border:"#065f46", label:"MARKETING HQ" },
-  { name:"analytics",  x:7,  y:12, w:6, h:5, color:"#1a1035", border:"#7c3aed", label:"ANALYTICS" },
-];
-
-// DESKS per room (tile positions)
-const DESKS = {
-  boardroom:  [[2,1],[3,2],[1,3]],
-  creative:   [[8,1],[10,1],[9,3]],
-  production: [[15,1],[16,2]],
-  trading:    [[2,7],[3,8]],
-  research:   [[8,7],[10,7]],
-  comms:      [[15,7]],
-  marketing:  [[2,13]],
-  analytics:  [[8,13],[9,14]],
-};
-
-// Assign agents to desks
-AGENTS.forEach((a, i) => {
-  const desks = DESKS[a.room] || [[i*2, i*2]];
-  const desk = desks[0] || [2,2];
-  a.deskX = desk[0]; a.deskY = desk[1];
-  a.x = desk[0] + 0.5; a.y = desk[1] + 0.5;
-  a.tx = a.x; a.ty = a.y;
-  a.walkPhase = Math.random() * Math.PI * 2;
-  a.idleTimer = Math.random() * 300;
-  a.walking = false;
-  a.bobPhase = Math.random() * Math.PI * 2;
-});
-
-// ======================================================
-// DRAW
-// ======================================================
-function drawTile(tx, ty, fillColor, alpha=1) {
-  const cx = isoX(tx,ty), cy = isoY(tx,ty);
-  const hw = (ISO_TILE/2)*scale, hh = (ISO_TILE/4)*scale;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy-hh);
-  ctx.lineTo(cx+hw, cy);
-  ctx.lineTo(cx, cy+hh);
-  ctx.lineTo(cx-hw, cy);
-  ctx.closePath();
-  ctx.fillStyle = fillColor;
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawRoom(room) {
-  const { x, y, w, h, color, border, label } = room;
-  // Floor tiles
-  for (let tx=x; tx<x+w; tx++) {
-    for (let ty=y; ty<y+h; ty++) {
-      drawTile(tx, ty, color, 0.85);
-    }
-  }
-  // Border walls (left and top)
-  for (let tx=x; tx<x+w; tx++) {
-    const cx = isoX(tx, y), cy = isoY(tx, y);
-    const hw = (ISO_TILE/2)*scale, hh = (ISO_TILE/4)*scale;
-    ctx.save();
-    ctx.strokeStyle = border;
-    ctx.lineWidth = 1.5 * scale;
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(cx-hw, cy);
-    ctx.lineTo(cx, cy-hh);
-    ctx.lineTo(cx+hw, cy);
-    ctx.stroke();
-    ctx.restore();
-  }
-  for (let ty=y; ty<y+h; ty++) {
-    const cx = isoX(x, ty), cy = isoY(x, ty);
-    const hw = (ISO_TILE/2)*scale, hh = (ISO_TILE/4)*scale;
-    ctx.save();
-    ctx.strokeStyle = border;
-    ctx.lineWidth = 1.5 * scale;
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(cx-hw, cy);
-    ctx.lineTo(cx, cy-hh);
-    ctx.stroke();
-    ctx.restore();
-  }
-  // Room label
-  const lx = isoX(x + w/2, y + h/2);
-  const ly = isoY(x + w/2, y + h/2) - 12*scale;
-  ctx.save();
-  ctx.globalAlpha = 0.2;
-  ctx.fillStyle = border;
-  ctx.font = `bold ${Math.max(9, 10*scale)}px -apple-system, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText(label, lx, ly);
-  ctx.restore();
-}
-
-function drawDesk(tx, ty, color) {
-  const cx = isoX(tx+0.5, ty+0.5);
-  const cy = isoY(tx+0.5, ty+0.5);
-  const s = scale;
-  
-  // Desk surface (iso box)
-  ctx.save();
-  // Top face
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - 12*s);
-  ctx.lineTo(cx + 18*s, cy - 6*s);
-  ctx.lineTo(cx, cy);
-  ctx.lineTo(cx - 18*s, cy - 6*s);
-  ctx.closePath();
-  ctx.fillStyle = '#1a1a3a';
-  ctx.fill();
-  // Left face
-  ctx.beginPath();
-  ctx.moveTo(cx - 18*s, cy - 6*s);
-  ctx.lineTo(cx, cy);
-  ctx.lineTo(cx, cy + 8*s);
-  ctx.lineTo(cx - 18*s, cy + 2*s);
-  ctx.closePath();
-  ctx.fillStyle = '#0f0f28';
-  ctx.fill();
-  // Right face
-  ctx.beginPath();
-  ctx.moveTo(cx + 18*s, cy - 6*s);
-  ctx.lineTo(cx, cy);
-  ctx.lineTo(cx, cy + 8*s);
-  ctx.lineTo(cx + 18*s, cy + 2*s);
-  ctx.closePath();
-  ctx.fillStyle = '#12122e';
-  ctx.fill();
-  // Glow edge
-  ctx.beginPath();
-  ctx.moveTo(cx - 18*s, cy - 6*s);
-  ctx.lineTo(cx, cy - 12*s);
-  ctx.lineTo(cx + 18*s, cy - 6*s);
-  ctx.strokeStyle = color;
-  ctx.globalAlpha = 0.5;
-  ctx.lineWidth = 1*s;
-  ctx.stroke();
-  // Monitor
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = '#0a0a1e';
-  ctx.fillRect(cx - 10*s, cy - 26*s, 20*s, 14*s);
-  ctx.fillStyle = color;
-  ctx.globalAlpha = 0.2;
-  ctx.fillRect(cx - 9*s, cy - 25*s, 18*s, 12*s);
-  ctx.restore();
-}
-
-function drawAgent(a, time) {
-  const ax = isoX(a.x, a.y);
-  const ay = isoY(a.x, a.y);
-  const s = scale;
-  const bob = Math.sin(a.bobPhase + time * 2) * 2 * s;
-  const statusColor = STATUS_COLOR[a.status];
-  
-  ctx.save();
-  
-  // Shadow
-  ctx.globalAlpha = 0.2;
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.ellipse(ax, ay + 2*s, 10*s, 5*s, 0, 0, Math.PI*2);
-  ctx.fill();
-  
-  // Body
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = a.color;
-  ctx.beginPath();
-  ctx.roundRect(ax - 8*s, ay - 22*s - bob, 16*s, 14*s, 3*s);
-  ctx.fill();
-  
-  // Head
-  ctx.fillStyle = a.color;
-  ctx.globalAlpha = 0.9;
-  ctx.beginPath();
-  ctx.roundRect(ax - 7*s, ay - 34*s - bob, 14*s, 12*s, 4*s);
-  ctx.fill();
-  
-  // Eyes
-  ctx.fillStyle = '#fff';
-  ctx.globalAlpha = 1;
-  ctx.fillRect(ax - 4*s, ay - 30*s - bob, 2.5*s, 2*s);
-  ctx.fillRect(ax + 1.5*s, ay - 30*s - bob, 2.5*s, 2*s);
-  
-  // Status orb
-  const orbPulse = 0.7 + Math.sin(time * 3 + a.walkPhase) * 0.3;
-  ctx.globalAlpha = orbPulse;
-  ctx.fillStyle = statusColor;
-  ctx.shadowColor = statusColor;
-  ctx.shadowBlur = 10*s;
-  ctx.beginPath();
-  ctx.arc(ax, ay - 42*s - bob + Math.sin(time*2)*2*s, 4*s, 0, Math.PI*2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  
-  // Name tag
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = '#fff';
-  ctx.font = `bold ${Math.max(9, 10*s)}px -apple-system, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText(a.name, ax, ay - 48*s - bob);
-  
-  // Role (smaller)
-  ctx.globalAlpha = 0.45;
-  ctx.font = `${Math.max(7, 8*s)}px -apple-system, sans-serif`;
-  ctx.fillStyle = a.color;
-  ctx.fillText(a.role, ax, ay - 38*s - bob);
-  
-  ctx.restore();
-}
-
-// ======================================================
-// AGENT MOVEMENT AI
-// ======================================================
-const MEETING_SPOTS = [[3,3],[10,3],[16,3],[3,9],[10,9],[16,9]];
-
-function updateAgents(dt) {
-  AGENTS.forEach(a => {
-    a.bobPhase += dt * 2;
-    a.idleTimer -= dt * 60;
-    
-    if (a.walking) {
-      const dx = a.tx - a.x, dy = a.ty - a.y;
-      const dist = Math.sqrt(dx*dx+dy*dy);
-      if (dist < 0.05) {
-        a.x = a.tx; a.y = a.ty; a.walking = false;
-      } else {
-        const speed = 0.03;
-        a.x += (dx/dist)*speed;
-        a.y += (dy/dist)*speed;
-      }
-    }
-    
-    if (!a.walking && a.idleTimer <= 0) {
-      a.idleTimer = 180 + Math.random()*400;
-      const r = Math.random();
-      if (r < 0.3) {
-        // Go to meeting spot
-        const spot = MEETING_SPOTS[Math.floor(Math.random()*MEETING_SPOTS.length)];
-        a.tx = spot[0] + (Math.random()-0.5)*1.5;
-        a.ty = spot[1] + (Math.random()-0.5)*1.5;
-        a.walking = true;
-        addActivity(a, `${a.name} moved to meeting room`);
-      } else if (r < 0.6) {
-        // Walk near desk
-        a.tx = a.deskX + (Math.random()-0.5)*1.5;
-        a.ty = a.deskY + (Math.random()-0.5)*1.5;
-        a.walking = true;
-      } else {
-        // Stay, update task
-        const tasks = ["Working on task...", "Processing data...", "Analyzing results...", "Idle - standby"];
-        if (Math.random() < 0.2) addActivity(a, getStatusUpdate(a));
-      }
-    }
-  });
-}
-
-function getStatusUpdate(a) {
-  const updates = {
-    ALPHA: ["Delegating tasks", "Reviewing progress", "System check complete"],
-    BETA: ["New prompt ready", "Reel batch queued", "Tweety added to frame"],
-    GAMMA: ["Video rendered", "Kling AI clip done", "Queue processed"],
-    DELTA: ["Position monitored", "Signal detected", "Balance updated"],
-    EPSILON: ["Market analyzed", "Prediction updated", "Signal confidence 73%"],
-    ZETA: ["Trend detected", "Report generated", "Algorithm update"],
-    ETA: ["Community engaged", "Post published", "Karma +5"],
-    THETA: ["Image generated", "Prompt optimized", "Batch complete"],
-    IOTA: ["Growth +0.3%", "Strategy updated", "Audience segment analyzed"],
-    KAPPA: ["Metrics updated", "RPM calculated", "Report ready"],
-  };
-  const list = updates[a.name] || ["Status updated"];
-  return list[Math.floor(Math.random()*list.length)];
-}
-
-// ======================================================
-// ACTIVITY FEED
-// ======================================================
-const activityFeed = document.getElementById('activity-feed');
-const activityLog = [];
-
-function addActivity(agent, text) {
-  const now = new Date();
-  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  activityLog.unshift({ agent, text, ts });
-  if (activityLog.length > 20) activityLog.pop();
-  renderActivity();
-}
-
-function renderActivity() {
-  activityFeed.innerHTML = activityLog.map(item => `
-    <div class="activity-item">
-      <span class="at">${item.agent.name}</span>
-      <span>${item.text}</span>
-      <span class="ts">${item.ts}</span>
+// ===================== STANDUP BOARD =====================
+function buildStandupBoard() {
+  const el = document.getElementById('sb-content');
+  el.innerHTML = AGENTS.map(a => `
+    <div class="sb-card">
+      <div class="sb-agent" style="color:${a.color}">${a.emoji} ${a.name} — ${a.role}</div>
+      <div class="sb-row"><span>Done:</span><span>${a.done}</span></div>
+      <div class="sb-row"><span>Doing:</span><span>${a.doing}</span></div>
+      <div class="sb-row"><span>Blocker:</span><span style="color:${a.blocker==='None'?'#4ade80':'#f87171'}">${a.blocker}</span></div>
     </div>
   `).join('');
 }
+buildStandupBoard();
 
-// Boot activity
-setTimeout(() => { AGENTS.forEach(a => addActivity(a, `${a.name} online — ${a.task.substring(0,30)}...`)); }, 500);
+let boardOpen = false;
+function toggleBoard() {
+  boardOpen = !boardOpen;
+  document.getElementById('standup-board').classList.toggle('open', boardOpen);
+  document.getElementById('chat').style.right = boardOpen ? '308px' : '28px';
+}
 
-// ======================================================
-// MAIN DRAW LOOP
-// ======================================================
-let lastTime = 0;
-function draw(time=0) {
-  const dt = (time - lastTime) / 1000;
-  lastTime = time;
+// ===================== BOTTOM BAR =====================
+function updateBottomBar() {
+  const bb = document.getElementById('bottombar');
+  const counts = { active:0, processing:0, standby:0 };
+  AGENTS.forEach(a => { if(counts[a.status]!==undefined) counts[a.status]++; });
+  bb.innerHTML = Object.entries(counts).map(([k,v]) => `
+    <div class="bs-item">
+      <div class="bs-dot" style="background:${SC[k]}"></div>
+      ${v} ${k}
+    </div>`).join('') +
+    `<div class="bs-item" style="margin-left:auto">hq.artbnca.com</div>`;
+}
+updateBottomBar();
+
+// ===================== ISO CANVAS =====================
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+let scale = 1.0, ox = 0, oy = 0;
+let dragging = false, ds = {x:0,y:0}, do_ = {x:0,y:0};
+
+function resize() {
+  const s = document.getElementById('scene');
+  W = canvas.width = s.clientWidth;
+  H = canvas.height = s.clientHeight;
+  ox = 0; oy = 0;
+}
+window.addEventListener('resize', resize);
+
+// Isometric math
+const TW = 80, TH = 40; // tile width/height at scale=1
+function ix(tx,ty) { return (tx-ty)*(TW/2)*scale + W/2 + ox; }
+function iy(tx,ty) { return (tx+ty)*(TH/2)*scale + H*0.3 + oy; }
+
+// ===================== OFFICE LAYOUT =====================
+// One big open floor like Luke's screenshot
+// White/cream floor, grey walls, wooden desks, round meeting table
+
+function drawFloor() {
+  const FW = 18, FH = 14;
+  // Floor tiles (cream/white)
+  for(let tx=0; tx<FW; tx++) {
+    for(let ty=0; ty<FH; ty++) {
+      const cx = ix(tx,ty), cy = iy(tx,ty);
+      const hw = (TW/2)*scale, hh = (TH/2)*scale;
+      const shade = ((tx+ty)%2===0) ? '#e8e4d8' : '#ebe7db';
+      ctx.beginPath();
+      ctx.moveTo(cx,cy-hh); ctx.lineTo(cx+hw,cy);
+      ctx.lineTo(cx,cy+hh); ctx.lineTo(cx-hw,cy);
+      ctx.closePath(); ctx.fillStyle=shade; ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=0.5*scale; ctx.stroke();
+    }
+  }
+  // Walls — left side
+  for(let ty=0; ty<FH; ty++) {
+    const cx=ix(0,ty), cy=iy(0,ty);
+    const hw=(TW/2)*scale, hh=(TH/2)*scale, wh=30*scale;
+    // Left wall face
+    ctx.beginPath();
+    ctx.moveTo(cx-hw,cy); ctx.lineTo(cx-hw,cy-wh);
+    ctx.lineTo(cx,cy-hh-wh); ctx.lineTo(cx,cy-hh);
+    ctx.closePath(); ctx.fillStyle='#c8c4b8'; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=0.5*scale; ctx.stroke();
+  }
+  // Walls — top side
+  for(let tx=0; tx<FW; tx++) {
+    const cx=ix(tx,0), cy=iy(tx,0);
+    const hw=(TW/2)*scale, hh=(TH/2)*scale, wh=30*scale;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy-hh); ctx.lineTo(cx,cy-hh-wh);
+    ctx.lineTo(cx+hw,cy-wh); ctx.lineTo(cx+hw,cy);
+    ctx.closePath(); ctx.fillStyle='#d4d0c4'; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.1)'; ctx.lineWidth=0.5*scale; ctx.stroke();
+  }
+}
+
+function drawDesk(tx, ty, color, hasMonitor=true) {
+  const cx=ix(tx+0.5,ty+0.5), cy=iy(tx+0.5,ty+0.5);
+  const s=scale;
+  // Desk top face
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-14*s); ctx.lineTo(cx+22*s,cy-7*s);
+  ctx.lineTo(cx,cy); ctx.lineTo(cx-22*s,cy-7*s);
+  ctx.closePath(); ctx.fillStyle='#8B6914'; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=0.5*s; ctx.stroke();
+  // Desk left face
+  ctx.beginPath();
+  ctx.moveTo(cx-22*s,cy-7*s); ctx.lineTo(cx,cy);
+  ctx.lineTo(cx,cy+9*s); ctx.lineTo(cx-22*s,cy+2*s);
+  ctx.closePath(); ctx.fillStyle='#6B4F10'; ctx.fill();
+  // Desk right face
+  ctx.beginPath();
+  ctx.moveTo(cx+22*s,cy-7*s); ctx.lineTo(cx,cy);
+  ctx.lineTo(cx,cy+9*s); ctx.lineTo(cx+22*s,cy+2*s);
+  ctx.closePath(); ctx.fillStyle='#7A5A12'; ctx.fill();
+  // Chair
+  ctx.beginPath();
+  ctx.arc(cx+5*s,cy+16*s,7*s,0,Math.PI*2);
+  ctx.fillStyle='#3d4f6b'; ctx.fill();
+  // Monitor
+  if(hasMonitor) {
+    ctx.fillStyle='#1a1a2e';
+    ctx.fillRect(cx-10*s,cy-30*s,20*s,15*s);
+    ctx.fillStyle=color; ctx.globalAlpha=0.35;
+    ctx.fillRect(cx-9*s,cy-29*s,18*s,13*s);
+    ctx.globalAlpha=1;
+    // Monitor stand
+    ctx.fillStyle='#333'; ctx.fillRect(cx-1.5*s,cy-16*s,3*s,3*s);
+  }
+}
+
+function drawRoundTable(tx,ty) {
+  const cx=ix(tx,ty), cy=iy(tx,ty); const s=scale;
+  // Table surface (ellipse in iso)
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,30*s,16*s,0,0,Math.PI*2);
+  ctx.fillStyle='#8B5E3C'; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=s; ctx.stroke();
+  // Table edge
+  ctx.beginPath();
+  ctx.ellipse(cx,cy+5*s,30*s,16*s,0,0,Math.PI*2);
+  ctx.fillStyle='#6B4A2A'; ctx.fill();
+  ctx.restore();
+  // Plant nearby
+  drawPlant(tx-2,ty-1);
+}
+
+function drawPlant(tx,ty) {
+  const cx=ix(tx,ty), cy=iy(tx,ty); const s=scale;
+  ctx.fillStyle='#4a6741'; ctx.fillRect(cx-3*s,cy-18*s,6*s,12*s);
+  ctx.fillStyle='#5a8a50'; ctx.beginPath();
+  ctx.arc(cx,cy-20*s,8*s,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#6aaa5a'; ctx.beginPath();
+  ctx.arc(cx-5*s,cy-16*s,5*s,0,Math.PI*2); ctx.fill();
+  ctx.arc(cx+5*s,cy-16*s,5*s,0,Math.PI*2); ctx.fill();
+}
+
+function drawSofa(tx,ty) {
+  const cx=ix(tx,ty), cy=iy(tx,ty); const s=scale;
+  // Seat
+  ctx.fillStyle='#3b5ea6'; 
+  ctx.fillRect(cx-18*s,cy-5*s,36*s,12*s);
+  // Back
+  ctx.fillStyle='#2d4a8a';
+  ctx.fillRect(cx-18*s,cy-15*s,36*s,10*s);
+  // Armrests
+  ctx.fillStyle='#4a6abb';
+  ctx.fillRect(cx-22*s,cy-15*s,6*s,22*s);
+  ctx.fillRect(cx+16*s,cy-15*s,6*s,22*s);
+}
+
+function drawServer(tx,ty) {
+  const cx=ix(tx,ty), cy=iy(tx,ty); const s=scale;
+  for(let i=0;i<4;i++) {
+    ctx.fillStyle=i%2===0?'#1a1a2e':'#252540';
+    ctx.fillRect(cx-12*s,cy-30*s+i*8*s,24*s,7*s);
+    ctx.fillStyle='#4ade80';
+    ctx.fillRect(cx+6*s,cy-28*s+i*8*s,3*s,3*s);
+  }
+}
+
+// ===================== AGENT DRAWING =====================
+function drawVoxelAgent(a, t) {
+  const cx=ix(a.x,a.y), cy=iy(a.x,a.y);
+  const s=scale;
+  const bob=Math.sin(a.bp+t*2.5)*(a.walking?0.5:1.5)*s;
   
-  ctx.clearRect(0, 0, W, H);
+  // Shadow
+  ctx.save(); ctx.globalAlpha=0.15;
+  ctx.beginPath(); ctx.ellipse(cx,cy+2*s,9*s,4*s,0,0,Math.PI*2);
+  ctx.fillStyle='#000'; ctx.fill(); ctx.restore();
   
-  // Background
-  ctx.fillStyle = '#0d0d1a';
-  ctx.fillRect(0, 0, W, H);
+  // Legs (if walking)
+  if(a.walking) {
+    const lsw=Math.sin(t*6+a.bp)*6*s;
+    ctx.fillStyle=a.color+'99';
+    ctx.fillRect(cx-4*s,cy-5*s+lsw,3*s,8*s);
+    ctx.fillRect(cx+1*s,cy-5*s-lsw,3*s,8*s);
+  } else {
+    ctx.fillStyle=a.color+'99';
+    ctx.fillRect(cx-4*s,cy-6*s,3*s,8*s);
+    ctx.fillRect(cx+1*s,cy-6*s,3*s,8*s);
+  }
   
-  // Rooms
-  ROOMS.forEach(r => drawRoom(r));
+  // Body
+  ctx.fillStyle=a.color;
+  ctx.fillRect(cx-7*s,cy-20*s-bob,14*s,14*s);
   
-  // Desks (sort by y for proper overlap)
-  Object.entries(DESKS).forEach(([room, desks]) => {
-    const agent = AGENTS.find(a => a.room === room);
-    const color = agent ? agent.color : '#a855f7';
-    desks.forEach(([tx,ty]) => drawDesk(tx, ty, color));
+  // Head
+  ctx.fillStyle=a.color;
+  ctx.globalAlpha=0.9;
+  ctx.fillRect(cx-6*s,cy-32*s-bob,12*s,12*s);
+  ctx.globalAlpha=1;
+  
+  // Face
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.fillRect(cx-4*s,cy-27*s-bob,3*s,3*s);
+  ctx.fillRect(cx+1*s,cy-27*s-bob,3*s,3*s);
+  // Mouth
+  ctx.fillRect(cx-2*s,cy-22*s-bob,5*s,1.5*s);
+  
+  // Name tag
+  ctx.save();
+  ctx.font=`bold ${Math.max(9,10*s)}px -apple-system,sans-serif`;
+  ctx.textAlign='center';
+  // Tag background
+  const tw=ctx.measureText(a.name).width+8*s;
+  ctx.fillStyle='rgba(0,0,0,0.65)';
+  ctx.beginPath();
+  ctx.roundRect(cx-tw/2,cy-44*s-bob,tw,12*s,3*s);
+  ctx.fill();
+  ctx.fillStyle=a.color;
+  ctx.fillText(a.name,cx,cy-34.5*s-bob);
+  
+  // Status dot
+  const sc=SC[a.status];
+  const op=0.6+Math.sin(t*4+a.bp)*0.4;
+  ctx.globalAlpha=op;
+  ctx.fillStyle=sc; ctx.shadowColor=sc; ctx.shadowBlur=8*s;
+  ctx.beginPath(); ctx.arc(cx,cy-48*s-bob+Math.sin(t*2)*2*s,3.5*s,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0; ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+// ===================== AGENT AI =====================
+// Desk positions
+const DESK_POS = [
+  [2,2],[5,2],[8,2],[11,2],[14,2],
+  [2,5],[5,5],[8,5],[11,5],[14,5],
+];
+const MEETING_POS = [[7,9],[8,9],[9,9],[8,10],[7,10],[9,10],[6,9],[10,9],[8,8],[8,11]];
+
+AGENTS.forEach((a,i) => {
+  const dp = DESK_POS[i];
+  a.deskX=dp[0]; a.deskY=dp[1];
+  a.x=dp[0]+0.4; a.y=dp[1]+0.5;
+  a.tx=a.x; a.ty=a.y;
+  a.bp=Math.random()*Math.PI*2;
+  a.idle=100+Math.random()*300;
+  a.walking=false;
+  a.inMeeting=false;
+});
+
+let meetingActive=false, meetingTimer=0, meetingInterval=600;
+
+function updateAgents(dt) {
+  // Meeting trigger
+  meetingTimer+=dt*60;
+  if(meetingTimer>meetingInterval && !meetingActive) {
+    meetingActive=true; meetingTimer=0; meetingInterval=400+Math.random()*400;
+    document.getElementById('standup-label').textContent='Gathering in meeting room...';
+    AGENTS.forEach((a,i)=>{
+      setTimeout(()=>{
+        const mp=MEETING_POS[i%MEETING_POS.length];
+        a.tx=mp[0]; a.ty=mp[1]; a.walking=true; a.inMeeting=true;
+      },i*300);
+    });
+    setTimeout(()=>{
+      document.getElementById('standup-label').textContent='Standup in progress...';
+    },3000);
+    setTimeout(()=>{
+      meetingActive=false;
+      document.getElementById('standup-label').textContent='Agents back to work';
+      AGENTS.forEach((a,i)=>{
+        setTimeout(()=>{
+          a.tx=a.deskX+0.4; a.ty=a.deskY+0.5; a.walking=true; a.inMeeting=false;
+        },i*200);
+      });
+      setTimeout(()=>{
+        document.getElementById('standup-label').textContent='All systems operational';
+      },5000);
+    },12000);
+  }
+
+  AGENTS.forEach(a=>{
+    a.bp+=dt*2.5;
+    if(a.walking) {
+      const dx=a.tx-a.x, dy=a.ty-a.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<0.04){ a.x=a.tx; a.y=a.ty; a.walking=false; }
+      else { const spd=0.04; a.x+=dx/dist*spd; a.y+=dy/dist*spd; }
+    } else if(!a.inMeeting) {
+      a.idle-=dt*60;
+      if(a.idle<=0) {
+        a.idle=150+Math.random()*350;
+        if(Math.random()<0.4) {
+          a.tx=a.deskX+(Math.random()-0.5)*1.2;
+          a.ty=a.deskY+(Math.random()-0.5)*1.2;
+          a.walking=true;
+        }
+      }
+    }
   });
+}
+
+// ===================== MAIN DRAW =====================
+let lt=0;
+function draw(t=0) {
+  const dt=Math.min((t-lt)/1000,0.05); lt=t;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,W,H);
   
-  // Agents sorted by y position (back-to-front)
-  const sorted = [...AGENTS].sort((a,b) => (a.x+a.y)-(b.x+b.y));
-  sorted.forEach(a => drawAgent(a, time/1000));
+  drawFloor();
   
-  // Agent movement
-  if (dt > 0 && dt < 0.1) updateAgents(dt);
+  // Server rack (corner)
+  drawServer(16,1);
+  drawServer(16,3);
   
+  // Desks
+  const deskColors=['#a78bfa','#38bdf8','#4ade80','#fbbf24','#fb923c','#22d3ee','#34d399','#c084fc','#6ee7b7','#67e8f9'];
+  DESK_POS.forEach(([tx,ty],i)=>drawDesk(tx,ty,deskColors[i],true));
+  
+  // Round meeting table
+  drawRoundTable(8,10);
+  
+  // Sofas/lounge
+  drawSofa(2,10);
+  drawSofa(14,10);
+  
+  // Plants
+  drawPlant(1,7); drawPlant(16,6); drawPlant(1,12); drawPlant(16,12);
+  
+  // Agents sorted by depth
+  [...AGENTS].sort((a,b)=>(a.x+a.y)-(b.x+b.y)).forEach(a=>drawVoxelAgent(a,t/1000));
+  
+  updateAgents(dt);
   requestAnimationFrame(draw);
 }
 
-// ======================================================
-// HOVER / CLICK
-// ======================================================
-const tooltip = document.getElementById('tooltip');
+// ===================== MOUSE =====================
+const tip=document.getElementById('tip');
 
-function getAgentAtMouse(mx, my) {
-  // Convert mouse to iso coords (rough)
-  let closest = null, minDist = Infinity;
-  AGENTS.forEach(a => {
-    const ax = isoX(a.x, a.y);
-    const ay = isoY(a.x, a.y) - 30*scale;
-    const dist = Math.sqrt((mx-ax)**2 + (my-ay)**2);
-    if (dist < 30*scale && dist < minDist) {
-      minDist = dist; closest = a;
-    }
+function getAgentAt(mx,my) {
+  let best=null,bd=Infinity;
+  AGENTS.forEach(a=>{
+    const ax=ix(a.x,a.y), ay=iy(a.x,a.y)-20*scale;
+    const d=Math.sqrt((mx-ax)**2+(my-ay)**2);
+    if(d<28*scale&&d<bd){bd=d;best=a;}
   });
-  return closest;
+  return best;
 }
 
-canvas.addEventListener('mousemove', e => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-  const agent = getAgentAtMouse(mx, my);
-  if (agent) {
-    tooltip.style.display = 'block';
-    tooltip.style.left = (e.clientX + 14) + 'px';
-    tooltip.style.top = (e.clientY - 80) + 'px';
-    document.getElementById('tt-name').textContent = agent.name;
-    document.getElementById('tt-name').style.color = agent.color;
-    document.getElementById('tt-role').textContent = agent.role;
-    document.getElementById('tt-task').textContent = '→ ' + agent.task;
-    const sc = STATUS_COLOR[agent.status];
-    document.getElementById('tt-status').textContent = '● ' + agent.status.toUpperCase();
-    document.getElementById('tt-status').style.color = sc;
-    canvas.style.cursor = 'pointer';
-    if (!dragging) return;
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const a=getAgentAt(mx,my);
+  if(a){
+    tip.style.display='block';
+    tip.style.left=(e.clientX+14)+'px';
+    tip.style.top=(e.clientY-80)+'px';
+    document.getElementById('tip-name').textContent=a.name;
+    document.getElementById('tip-name').style.color=a.color;
+    document.getElementById('tip-role').textContent=a.role;
+    document.getElementById('tip-task').textContent='→ '+a.doing;
+    canvas.style.cursor='pointer';
   } else {
-    tooltip.style.display = 'none';
-    canvas.style.cursor = dragging ? 'grabbing' : 'grab';
+    tip.style.display='none';
+    canvas.style.cursor=dragging?'grabbing':'default';
   }
-  if (dragging) {
-    offsetX = dragOffset.x + (e.clientX - dragStart.x);
-    offsetY = dragOffset.y + (e.clientY - dragStart.y);
-  }
+  if(dragging){ox=do_.x+(e.clientX-ds.x);oy=do_.y+(e.clientY-ds.y);}
 });
 
-canvas.addEventListener('mousedown', e => {
-  dragging = true;
-  dragStart = { x: e.clientX, y: e.clientY };
-  dragOffset = { x: offsetX, y: offsetY };
-  canvas.style.cursor = 'grabbing';
+canvas.addEventListener('mousedown',e=>{dragging=true;ds={x:e.clientX,y:e.clientY};do_={x:ox,y:oy};canvas.style.cursor='grabbing';});
+window.addEventListener('mouseup',()=>{dragging=false;});
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const a=getAgentAt(e.clientX-r.left,e.clientY-r.top);
+  if(a)openChat(a);
 });
-window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
-
-canvas.addEventListener('click', e => {
-  const rect = canvas.getBoundingClientRect();
-  const agent = getAgentAtMouse(e.clientX - rect.left, e.clientY - rect.top);
-  if (agent) openChat(agent);
-});
-
-canvas.addEventListener('wheel', e => {
-  const factor = e.deltaY > 0 ? 0.9 : 1.1;
-  scale = Math.max(0.4, Math.min(2.5, scale * factor));
+canvas.addEventListener('wheel',e=>{
+  scale=Math.max(0.4,Math.min(2.8,scale*(e.deltaY>0?0.92:1.08)));
   e.preventDefault();
-}, { passive: false });
+},{passive:false});
 
-function zoomIn() { scale = Math.min(2.5, scale * 1.15); }
-function zoomOut() { scale = Math.max(0.4, scale * 0.85); }
-function resetView() { scale = 1; offsetX = 0; offsetY = 0; }
+function zoomIn(){scale=Math.min(2.8,scale*1.12);}
+function zoomOut(){scale=Math.max(0.4,scale*0.88);}
+function resetView(){scale=1;ox=0;oy=0;}
 
-// ======================================================
-// CHAT
-// ======================================================
-let activeAgent = null;
-
-function openChat(agent) {
-  activeAgent = agent;
-  document.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`ab-${agent.id}`)?.classList.add('active');
-  
+// ===================== CHAT =====================
+let activeA=null;
+function openChat(a){
+  activeA=a;
+  document.querySelectorAll('.tb-agent').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`tba-${a.id}`)?.classList.add('active');
   document.getElementById('chat').classList.add('open');
-  document.getElementById('activity').style.right = '320px';
-  document.getElementById('legend').style.right = '330px';
-  
-  const av = document.getElementById('ch-avatar');
-  av.textContent = agent.greek;
-  av.style.background = agent.color + '22';
-  av.style.border = `1px solid ${agent.color}44`;
-  av.style.color = agent.color;
-  document.getElementById('ch-name').textContent = agent.name;
-  document.getElementById('ch-name').style.color = agent.color;
-  document.getElementById('ch-role').textContent = agent.role;
-  document.getElementById('ch-status').textContent = '● ' + agent.status.toUpperCase();
-  document.getElementById('ch-status').style.color = STATUS_COLOR[agent.status];
-  
-  const msgs = document.getElementById('chat-msgs');
-  msgs.innerHTML = '';
-  
-  setTimeout(() => {
-    showTyping();
-    setTimeout(() => {
-      removeTyping();
-      addMsg(agent, getRandom(agent.responses), 'bot');
-    }, 900 + Math.random()*400);
-  }, 200);
+  const av=document.getElementById('ch-av');
+  av.textContent=a.emoji; av.style.background=a.color+'22'; av.style.border=`1px solid ${a.color}44`; av.style.color=a.color;
+  document.getElementById('ch-nm').textContent=a.name; document.getElementById('ch-nm').style.color=a.color;
+  document.getElementById('ch-rl').textContent=a.role;
+  document.getElementById('ch-msgs').innerHTML='';
+  setTimeout(()=>{showTyping();setTimeout(()=>{rmTyping();addMsg(a,rnd(a.responses),'bot');},700+Math.random()*500);},300);
 }
-
-function closeChat() {
+function closeChat(){
   document.getElementById('chat').classList.remove('open');
-  document.getElementById('activity').style.right = '0';
-  document.getElementById('legend').style.right = '20px';
-  document.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
-  activeAgent = null;
+  document.querySelectorAll('.tb-agent').forEach(b=>b.classList.remove('active'));
+  activeA=null;
 }
-
-function getTime() {
-  const n = new Date();
-  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+function addMsg(a,text,type){
+  const m=document.getElementById('ch-msgs');
+  const d=document.createElement('div'); d.className=`cm ${type}`;
+  const ts=new Date(); const t=`${String(ts.getHours()).padStart(2,'0')}:${String(ts.getMinutes()).padStart(2,'0')}`;
+  if(type==='bot') d.innerHTML=`<div class="cm-av" style="background:${a.color}22;border:1px solid ${a.color}33;color:${a.color}">${a.emoji}</div><div><div class="cm-b">${text}</div><div class="cm-t">${t}</div></div>`;
+  else d.innerHTML=`<div><div class="cm-b">${text}</div><div class="cm-t" style="text-align:right">${t}</div></div><div class="cm-av" style="background:#5b21b622;color:#a78bfa">A</div>`;
+  m.appendChild(d); m.scrollTop=m.scrollHeight;
 }
-function getRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
-
-function addMsg(agent, text, type) {
-  const msgs = document.getElementById('chat-msgs');
-  const d = document.createElement('div');
-  d.className = `msg ${type}`;
-  if (type === 'bot') {
-    d.innerHTML = `<div class="mv" style="background:${agent.color}22;border:1px solid ${agent.color}33;color:${agent.color}">${agent.greek}</div>
-      <div><div class="mb">${text}</div><div class="mt">${getTime()}</div></div>`;
-  } else {
-    d.innerHTML = `<div><div class="mb">${text}</div><div class="mt" style="text-align:right">${getTime()}</div></div>
-      <div class="mv" style="background:#7c3aed22;border:1px solid #7c3aed33;color:#a855f7">A</div>`;
-  }
-  msgs.appendChild(d);
-  msgs.scrollTop = msgs.scrollHeight;
+function showTyping(){
+  if(!activeA)return;
+  const m=document.getElementById('ch-msgs');
+  const d=document.createElement('div'); d.className='cm bot'; d.id='typ';
+  d.innerHTML=`<div class="cm-av" style="background:${activeA.color}22;color:${activeA.color}">${activeA.emoji}</div><div class="cm-b"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  m.appendChild(d); m.scrollTop=m.scrollHeight;
 }
-
-function showTyping() {
-  if (!activeAgent) return;
-  const msgs = document.getElementById('chat-msgs');
-  const d = document.createElement('div');
-  d.className = 'msg bot'; d.id = 'typing';
-  d.innerHTML = `<div class="mv" style="background:${activeAgent.color}22;color:${activeAgent.color}">${activeAgent.greek}</div>
-    <div class="mb"><div class="typing-bubble"><span></span><span></span><span></span></div></div>`;
-  msgs.appendChild(d);
-  msgs.scrollTop = msgs.scrollHeight;
+function rmTyping(){const e=document.getElementById('typ');if(e)e.remove();}
+function sendMsg(){
+  const inp=document.getElementById('ch-inp'); const txt=inp.value.trim();
+  if(!txt||!activeA)return; inp.value='';
+  addMsg(activeA,txt,'me'); showTyping();
+  setTimeout(()=>{rmTyping();addMsg(activeA,rnd(activeA.responses),'bot');},500+Math.random()*700);
 }
+document.getElementById('ch-inp').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)];}
 
-function removeTyping() {
-  const t = document.getElementById('typing');
-  if (t) t.remove();
-}
+// ===================== CLOCK =====================
+setInterval(()=>{
+  const n=new Date();
+  // no clock in topbar for this layout
+},1000);
 
-function sendMsg() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text || !activeAgent) return;
-  input.value = '';
-  addMsg(activeAgent, text, 'me');
-  showTyping();
-  setTimeout(() => {
-    removeTyping();
-    addMsg(activeAgent, getRandom(activeAgent.responses), 'bot');
-    addActivity(activeAgent, `Ответил на запрос`);
-  }, 600 + Math.random()*700);
-}
-
-document.getElementById('chat-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-});
-
-// ======================================================
-// CLOCK
-// ======================================================
-setInterval(() => {
-  const n = new Date();
-  document.getElementById('clock').textContent =
-    `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')} PDT`;
-}, 1000);
-
-// Auto activity every 30s
-setInterval(() => {
-  const a = AGENTS[Math.floor(Math.random()*AGENTS.length)];
-  addActivity(a, getStatusUpdate(a));
-}, 30000);
-
-// ======================================================
-// START
-// ======================================================
+// ===================== START =====================
 resize();
 requestAnimationFrame(draw);
-canvas.style.cursor = 'grab';
 </script>
 </body>
 </html>
